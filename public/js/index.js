@@ -1,7 +1,7 @@
 const INPUT_BUFFER_LENGTH = 4096;
 const OUTPUT_BUFFER_LENGTH = 4000;
 const OUTPUT_SAMPLE_RATE = 16000; //Unit: Hz
-
+const SERVER_URL = "http://localhost:8080";
 // Deal with prefixed APIs
 window.AudioContext = window.AudioContext || window.webkitAudioContext;
 navigator.getUserMedia = navigator.getUserMedia ||
@@ -44,12 +44,20 @@ jQuery( document ).ready(function() {
 });
 
 var recognizer = {};
-
 //the consumer that parse the audio data
 recognizer.postMessage=function(cmd){
 	if(cmd.command=="process"){
 		var data = cmd.data;
-		//process the data
-
+		//send the data
+		var oReq = new XMLHttpRequest();
+		oReq.open("POST", SERVER_URL, true);
+		oReq.onload = function (oEvent) {
+		  // Uploaded.
+		  console.log("uploaded");
+		};
+		console.log(data);
+		var blob = new Blob ([data], {type:'audio/wav'});
+		oReq.send(blob);
 	}
 }
+

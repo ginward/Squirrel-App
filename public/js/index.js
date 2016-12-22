@@ -1,3 +1,7 @@
+const INPUT_BUFFER_LENGTH = 4096;
+const OUTPUT_BUFFER_LENGTH = 4000;
+const OUTPUT_SAMPLE_RATE = 16000; //Unit: Hz
+
 // Deal with prefixed APIs
 window.AudioContext = window.AudioContext || window.webkitAudioContext;
 navigator.getUserMedia = navigator.getUserMedia ||
@@ -12,15 +16,19 @@ try {
 }
 
 var recorder;
+var config = {
+	inputBufferLength: INPUT_BUFFER_LENGTH,
+	outputBufferLength: OUTPUT_BUFFER_LENGTH, 
+	outputSampleRate: OUTPUT_SAMPLE_RATE
+};
 //Callback once the user authorizes access to the microphone:
 function startUserMedia(stream) {
     var input = audioContext.createMediaStreamSource(stream);
-    recorder = new AudioRecorder(input);
+    recorder = new AudioRecorder(input, config);
     // We can, for instance, add a recognizer as consumer
     if (recognizer) recorder.consumers.push(recognizer);
     recorder.start();
 };
-
 
 //the button to launch the recording
 jQuery( document ).ready(function() {
@@ -42,6 +50,6 @@ recognizer.postMessage=function(cmd){
 	if(cmd.command=="process"){
 		var data = cmd.data;
 		//process the data
-		
+
 	}
 }

@@ -55,51 +55,69 @@ recognizer.postMessage=function(cmd){
 		  // Uploaded.
 		  console.log("uploaded");
 		};
-		var wav = packageWAV(data);
+		var wav = arrayBufferToBase64(packageWAV(data));
 		console.log(wav);
-		var blob = new Blob ([wav], {type:'audio/wav'});
-		oReq.send(blob);
+		oReq.send(wav);
 	}
 }
 
 //function to package WAV data
-function packageWAV(data){
-	//the buffer is used to create the WAV file
-	var buffer = new ArrayBuffer(44+data.length*2);
-	var view = new DataView(buffer);
-	//write the WAV container 
-	//RIFF chunk descriptor 
-	writeUTFBytes(view, 0, "RIFF");
-	view.setUint32(4, 44+data.length*2, true);
-	writeUTFBytes(view, 8, 'WAVE');
-	//FMT sub-chunk
-	writeUTFBytes(view, 12, 'fmt');
-	view.setUint32(16, 16, true);
-	view.setUint16(20, 1, true);
-	//stereo (2 channels)
-	view.setUint16(22, 2, true);
-	view.setUint32(24, OUTPUT_SAMPLE_RATE, true);
-	view.setUint32(28, OUTPUT_SAMPLE_RATE * 4, true);
-	view.setUint16(32, 4, true);
-	view.setUint16(34, 16, true);
-	//data sub chunk
-	writeUTFBytes(view, 36, 'data');
-	view.setUint32(40, data.length*2, true);
+function packageWAV(samples, mono){
+  
+  var buffer = new ArrayBuffer(44 + samples.length * 2);
 
-	//write the PCM samples
-	var lng = data.length; 
-	var index = 44; 
-	var volume = 1; 
-	for (var i=0;i<lng;i++){
-		view.setInt16(index, data[i] *  (0x7FFF * volume), true);
-		index+=2;
-	}
-	return view; 
+  var view = new DataView(buffer);
+  /* RIFF identifier */
+  writeString(view, 0, 'RIFF');
+  /* file length */
+  view.setUint32(4, 32 + samples.length * 2, true);
+  /* RIFF type */
+  writeString(view, 8, 'WAVE');
+  /* format chunk identifier */
+  writeString(view, 12, 'fmt ');
+  /* format chunk length */
+  view.setUint32(16, 16, true);
+  /* sample format (raw) */
+  view.setUint16(20, 1, true);
+  /* channel count */
+  view.setUint16(22, mono?1:2, true);
+  /* sample rate */
+  view.setUint32(24, OUTPUT_SAMPLE_RATE, true);
+  /* byte rate (sample rate * block align) */
+  view.setUint32(28, OUTPUT_SAMPLE_RATE * 4, true);
+  /* block align (channel count * bytes per sample) */
+  view.setUint16(32, 4, true);
+  /* bits per sample */
+  view.setUint16(34, 16, true);
+  /* data chunk identifier */
+  writeString(view, 36, 'data');
+  /* data chunk length */
+  view.setUint32(40, samples.length * 2, true);
+
+  floatTo16BitPCM(view, 44, samples);
+
+  return buffer;
 }
 
-function writeUTFBytes(view, offset, string){
-	var lng = string.length;
-	for (var i=0; i<lng; i++){
-		view.setUint8(offset+i, string.charCodeAt(i));
-	}
+function arrayBufferToBase64( buffer ) {
+    var binary = '';
+    var bytes = new Uint8Array( buffer );
+    var len = bytes.byteLength;
+    for (var i = 0; i < len; i++) {
+        binary += String.fromCharCode( bytes[ i ] );
+    }
+    return window.btoa( binary );
+}
+
+function writeString(view, offset, string){
+  for (var i = 0; i < string.length; i++){
+    view.setUint8(offset + i, string.charCodeAt(i));
+  }
+}
+
+function floatTo16BitPCM(output, offset, input){
+  for (var i = 0; i < input.length; i++, offset+=2){
+    var s = Math.max(-1, Math.min(1, input[i]));
+    output.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
+  }
 }

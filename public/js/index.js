@@ -1,5 +1,5 @@
 const SERVER_URL = "http://localhost:8080";
-
+const RECORDING_INTERVAL = 3000; //ms
 //initialize the audio
 initAudio();
 
@@ -9,10 +9,10 @@ jQuery( document ).ready(function() {
         audioRecorder.record();
         setTimeout(function(){
             audioRecorder.stop();
-            audioRecorder.exportWAV( uploadBlob );
+            audioRecorder.exportMonoWAV( uploadBlob );
             audioRecorder.clear();
             audioRecorder.record();
-        }, 10000);
+        }, RECORDING_INTERVAL);
     });
 });
 

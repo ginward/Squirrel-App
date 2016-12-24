@@ -1,123 +1,227 @@
-const INPUT_BUFFER_LENGTH = 4096;
-const OUTPUT_BUFFER_LENGTH = 100000;
-const OUTPUT_SAMPLE_RATE = 16000; //Unit: Hz
 const SERVER_URL = "http://localhost:8080";
-// Deal with prefixed APIs
-window.AudioContext = window.AudioContext || window.webkitAudioContext;
-navigator.getUserMedia = navigator.getUserMedia ||
-                         navigator.webkitGetUserMedia ||
-                         navigator.mozGetUserMedia;
 
-// Instantiating AudioContext
-try {
-    var audioContext = new AudioContext();
-} catch (e) {
-    console.log("Error initializing Web Audio");
-}
-
-var recorder;
-var config = {
-	inputBufferLength: INPUT_BUFFER_LENGTH,
-	outputBufferLength: OUTPUT_BUFFER_LENGTH, 
-	outputSampleRate: OUTPUT_SAMPLE_RATE
-};
-//Callback once the user authorizes access to the microphone:
-function startUserMedia(stream) {
-    var input = audioContext.createMediaStreamSource(stream);
-    recorder = new AudioRecorder(input, config);
-    // We can, for instance, add a recognizer as consumer
-    if (recognizer) recorder.consumers.push(recognizer);
-    recorder.start();
-};
+//initialize the audio
+initAudio();
 
 //the button to launch the recording
 jQuery( document ).ready(function() {
-	jQuery("#record").click(function(){
-		// Actually call getUserMedia
-		if (navigator.getUserMedia)
-		    navigator.getUserMedia({audio: true},
-		                           startUserMedia,
-		                           function(e) {console.log("No live audio input in this browser");}
-		                          );
-		else console.log("No web audio support in this browser");
-	});
+    jQuery("#record").click(function(){
+        audioRecorder.record();
+        setTimeout(function(){
+            audioRecorder.stop();
+            audioRecorder.exportWAV( uploadBlob );
+            audioRecorder.clear();
+            audioRecorder.record();
+        }, 10000);
+    });
 });
 
-var recognizer = {};
-//the consumer that parse the audio data
-recognizer.postMessage=function(cmd){
-	if(cmd.command=="process"){
-		var data = cmd.data;
-		//send the data
-		var oReq = new XMLHttpRequest();
-		oReq.open("POST", SERVER_URL, true);
-		oReq.onload = function (oEvent) {
-		  // Uploaded.
-		  console.log("uploaded");
-		};
-		var wav = arrayBufferToBase64(packageWAV(data));
-		console.log(wav);
-		oReq.send(wav);
-	}
+function uploadBlob(blob){
+    var reader = new window.FileReader();
+        reader.readAsDataURL(blob); 
+        reader.onloadend = function() {
+            base64data = this.result;
+            base64data=base64data.substr(base64data.indexOf(',')+1)
+            request(base64data);                
+            console.log(base64data);
+        }
 }
 
-//function to package WAV data
-function packageWAV(samples, mono){
-  
-  var buffer = new ArrayBuffer(44 + samples.length * 2);
-
-  var view = new DataView(buffer);
-  /* RIFF identifier */
-  writeString(view, 0, 'RIFF');
-  /* file length */
-  view.setUint32(4, 32 + samples.length * 2, true);
-  /* RIFF type */
-  writeString(view, 8, 'WAVE');
-  /* format chunk identifier */
-  writeString(view, 12, 'fmt ');
-  /* format chunk length */
-  view.setUint32(16, 16, true);
-  /* sample format (raw) */
-  view.setUint16(20, 1, true);
-  /* channel count */
-  view.setUint16(22, mono?1:2, true);
-  /* sample rate */
-  view.setUint32(24, OUTPUT_SAMPLE_RATE, true);
-  /* byte rate (sample rate * block align) */
-  view.setUint32(28, OUTPUT_SAMPLE_RATE * 4, true);
-  /* block align (channel count * bytes per sample) */
-  view.setUint16(32, 4, true);
-  /* bits per sample */
-  view.setUint16(34, 16, true);
-  /* data chunk identifier */
-  writeString(view, 36, 'data');
-  /* data chunk length */
-  view.setUint32(40, samples.length * 2, true);
-
-  floatTo16BitPCM(view, 44, samples);
-
-  return buffer;
+function request(base64data){
+    //send the data
+    var oReq = new XMLHttpRequest();
+    oReq.open("POST", SERVER_URL, true);
+    oReq.onload = function (oEvent) {
+      // Uploaded.
+      console.log("uploaded");
+    };
+    oReq.send(base64data);
 }
 
-function arrayBufferToBase64( buffer ) {
-    var binary = '';
-    var bytes = new Uint8Array( buffer );
-    var len = bytes.byteLength;
-    for (var i = 0; i < len; i++) {
-        binary += String.fromCharCode( bytes[ i ] );
+//the following code is attributed to Chris Wilson
+/* Copyright 2013 Chris Wilson
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+*/
+
+window.AudioContext = window.AudioContext || window.webkitAudioContext;
+
+var audioContext = new AudioContext();
+var audioInput = null,
+    realAudioInput = null,
+    inputPoint = null,
+    audioRecorder = null;
+var rafID = null;
+var analyserContext = null;
+var canvasWidth, canvasHeight;
+var recIndex = 0;
+
+/* TODO:
+
+- offer mono option
+- "Monitor input" switch
+*/
+
+function saveAudio() {
+    audioRecorder.exportWAV( doneEncoding );
+    // could get mono instead by saying
+    // audioRecorder.exportMonoWAV( doneEncoding );
+}
+
+function gotBuffers( buffers ) {
+    var canvas = document.getElementById( "wavedisplay" );
+
+    drawBuffer( canvas.width, canvas.height, canvas.getContext('2d'), buffers[0] );
+
+    // the ONLY time gotBuffers is called is right after a new recording is completed - 
+    // so here's where we should set up the download.
+    audioRecorder.exportWAV( doneEncoding );
+}
+
+function doneEncoding( blob ) {
+    Recorder.setupDownload( blob, "myRecording" + ((recIndex<10)?"0":"") + recIndex + ".wav" );
+    recIndex++;
+}
+
+function toggleRecording( e ) {
+    if (e.classList.contains("recording")) {
+        // stop recording
+        audioRecorder.stop();
+        e.classList.remove("recording");
+        audioRecorder.getBuffers( gotBuffers );
+    } else {
+        // start recording
+        if (!audioRecorder)
+            return;
+        e.classList.add("recording");
+        audioRecorder.clear();
+        audioRecorder.record();
     }
-    return window.btoa( binary );
 }
 
-function writeString(view, offset, string){
-  for (var i = 0; i < string.length; i++){
-    view.setUint8(offset + i, string.charCodeAt(i));
-  }
+function convertToMono( input ) {
+    var splitter = audioContext.createChannelSplitter(2);
+    var merger = audioContext.createChannelMerger(2);
+
+    input.connect( splitter );
+    splitter.connect( merger, 0, 0 );
+    splitter.connect( merger, 0, 1 );
+    return merger;
 }
 
-function floatTo16BitPCM(output, offset, input){
-  for (var i = 0; i < input.length; i++, offset+=2){
-    var s = Math.max(-1, Math.min(1, input[i]));
-    output.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
-  }
+function cancelAnalyserUpdates() {
+    window.cancelAnimationFrame( rafID );
+    rafID = null;
+}
+
+function updateAnalysers(time) {
+    /*
+    if (!analyserContext) {
+        var canvas = document.getElementById("analyser");
+        canvasWidth = canvas.width;
+        canvasHeight = canvas.height;
+        analyserContext = canvas.getContext('2d');
+    }
+
+    // analyzer draw code here
+    {
+        var SPACING = 3;
+        var BAR_WIDTH = 1;
+        var numBars = Math.round(canvasWidth / SPACING);
+        var freqByteData = new Uint8Array(analyserNode.frequencyBinCount);
+
+        analyserNode.getByteFrequencyData(freqByteData); 
+
+        analyserContext.clearRect(0, 0, canvasWidth, canvasHeight);
+        analyserContext.fillStyle = '#F6D565';
+        analyserContext.lineCap = 'round';
+        var multiplier = analyserNode.frequencyBinCount / numBars;
+
+        // Draw rectangle for each frequency bin.
+        for (var i = 0; i < numBars; ++i) {
+            var magnitude = 0;
+            var offset = Math.floor( i * multiplier );
+            // gotta sum/average the block, or we miss narrow-bandwidth spikes
+            for (var j = 0; j< multiplier; j++)
+                magnitude += freqByteData[offset + j];
+            magnitude = magnitude / multiplier;
+            var magnitude2 = freqByteData[i * multiplier];
+            analyserContext.fillStyle = "hsl( " + Math.round((i*360)/numBars) + ", 100%, 50%)";
+            analyserContext.fillRect(i * SPACING, canvasHeight, BAR_WIDTH, -magnitude);
+        }
+    }
+    
+    rafID = window.requestAnimationFrame( updateAnalysers );
+    */
+}
+
+function toggleMono() {
+    if (audioInput != realAudioInput) {
+        audioInput.disconnect();
+        realAudioInput.disconnect();
+        audioInput = realAudioInput;
+    } else {
+        realAudioInput.disconnect();
+        audioInput = convertToMono( realAudioInput );
+    }
+
+    audioInput.connect(inputPoint);
+}
+
+function gotStream(stream) {
+    inputPoint = audioContext.createGain();
+
+    // Create an AudioNode from the stream.
+    realAudioInput = audioContext.createMediaStreamSource(stream);
+    audioInput = realAudioInput;
+    audioInput.connect(inputPoint);
+
+//    audioInput = convertToMono( input );
+
+    analyserNode = audioContext.createAnalyser();
+    analyserNode.fftSize = 2048;
+    inputPoint.connect( analyserNode );
+
+    audioRecorder = new Recorder( inputPoint );
+
+    zeroGain = audioContext.createGain();
+    zeroGain.gain.value = 0.0;
+    inputPoint.connect( zeroGain );
+    zeroGain.connect( audioContext.destination );
+    updateAnalysers();
+}
+
+function initAudio() {
+        if (!navigator.getUserMedia)
+            navigator.getUserMedia = navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
+        if (!navigator.cancelAnimationFrame)
+            navigator.cancelAnimationFrame = navigator.webkitCancelAnimationFrame || navigator.mozCancelAnimationFrame;
+        if (!navigator.requestAnimationFrame)
+            navigator.requestAnimationFrame = navigator.webkitRequestAnimationFrame || navigator.mozRequestAnimationFrame;
+
+    navigator.getUserMedia(
+        {
+            "audio": {
+                "mandatory": {
+                    "googEchoCancellation": "false",
+                    "googAutoGainControl": "false",
+                    "googNoiseSuppression": "false",
+                    "googHighpassFilter": "false"
+                },
+                "optional": []
+            },
+        }, gotStream, function(e) {
+            alert('Error getting audio');
+            console.log(e);
+        });
 }

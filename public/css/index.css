@@ -1,6 +1,7 @@
 #analyser{
 	width: 100%;
 	height: 100%;
+	bottom: 0;
 	position: absolute;
 }
 
@@ -11,5 +12,14 @@
 	margin-left: auto;
 	margin-right: auto;
 	bottom: 50px;
+	z-index: 999999;
+}
+
+textarea {
+	margin-right: auto !important;
+	margin-left: auto !important;
+	width: 80% !important	;
+	height: 300px;
+	display: block;
 	z-index: 999999;
 }

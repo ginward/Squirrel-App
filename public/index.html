@@ -9,10 +9,16 @@
 		<script src="js/index.js"></script>
 		<link rel="stylesheet" href="css/index.css">
 		<link rel="stylesheet" href="css/buttons.css">
+		<link rel="stylesheet" href="css/pure-min.css">
 	</head>
 
 	<body>
-		<a id="record" href="javascript:void(0)" class="button button-circle button-flat-primary">Record</a>
+		<form class="pure-form">
+		    <fieldset class="pure-group">
+		        <textarea class="pure-input-1-2" placeholder="Translated Text Appears Here"></textarea>
+		    </fieldset>
+		</form>
+		<a id="record" href="javascript:void(0)" class="button button-circle button-flat-primary">Voice to Text</a>
 		<canvas id="analyser" width="600" height="500"></canvas>
 	</body>
 </html>

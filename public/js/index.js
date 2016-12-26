@@ -1,12 +1,16 @@
 const SERVER_URL = "http://localhost:8080";
-const RECORDING_INTERVAL = 30000; //ms
+const RECORDING_INTERVAL = 15000; //ms
 //initialize the audio
 initAudio();
 
 //the button to launch the recording
 jQuery( document ).ready(function() {
+    jQuery(".hint").hide();
+    jQuery(".ball_container").hide();
     jQuery("#record").click(function(){
         audioRecorder.record();
+        jQuery(".hint").show();
+        jQuery(".ball_container").show();
         setInterval(function(){
             audioRecorder.stop();
             audioRecorder.exportMonoWAV( uploadBlob );

@@ -23,7 +23,6 @@ function uploadBlob(blob){
             base64data = this.result;
             base64data=base64data.substr(base64data.indexOf(',')+1)
             request(base64data);                
-            console.log(base64data);
         }
 }
 

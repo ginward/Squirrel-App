@@ -6,19 +6,7 @@ initAudio();
 //the button to launch the recording
 jQuery( document ).ready(function() {
     jQuery(".hint").hide();
-    jQuery(".ball_container").hide();
-    jQuery("#record").click(function(){
-        audioRecorder.record();
-        jQuery(".hint").show();
-        jQuery(".ball_container").show();
-        setInterval(function(){
-            audioRecorder.stop();
-            audioRecorder.exportMonoWAV( uploadBlob );
-            audioRecorder.clear();
-            audioRecorder.record();
-            console.log("launched_again");
-        }, RECORDING_INTERVAL);
-    });
+    jQuery(".ball_container").hide(); 
 });
 
 function uploadBlob(blob){
@@ -48,6 +36,8 @@ function request(base64data){
             var original = jQuery('#main_txt').val();
             var new_txt = txt + original;
             jQuery('#main_txt').val(new_txt);
+            jQuery(".hint").hide();
+            jQuery(".ball_container").hide();
         }
     }
 }
@@ -112,12 +102,17 @@ function toggleRecording( e ) {
         // stop recording
         audioRecorder.stop();
         e.classList.remove("recording");
-        audioRecorder.getBuffers( gotBuffers );
+        //audioRecorder.getBuffers( gotBuffers );
+        audioRecorder.exportMonoWAV( uploadBlob );
+        e.innerHTML = "Voice to Text";
+        jQuery(".hint").show();
+        jQuery(".ball_container").show();
     } else {
         // start recording
         if (!audioRecorder)
             return;
         e.classList.add("recording");
+        e.innerHTML = "STOP";
         audioRecorder.clear();
         audioRecorder.record();
     }

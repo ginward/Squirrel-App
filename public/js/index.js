@@ -1,5 +1,5 @@
 const SERVER_URL = "http://localhost:8080";
-const RECORDING_INTERVAL = 3000; //ms
+const RECORDING_INTERVAL = 30000; //ms
 //initialize the audio
 initAudio();
 
@@ -7,11 +7,12 @@ initAudio();
 jQuery( document ).ready(function() {
     jQuery("#record").click(function(){
         audioRecorder.record();
-        setTimeout(function(){
+        setInterval(function(){
             audioRecorder.stop();
             audioRecorder.exportMonoWAV( uploadBlob );
             audioRecorder.clear();
             audioRecorder.record();
+            console.log("launched_again");
         }, RECORDING_INTERVAL);
     });
 });
@@ -35,6 +36,16 @@ function request(base64data){
       console.log("uploaded");
     };
     oReq.send(base64data);
+    //write the text to the box
+    oReq.onreadystatechange = function() {
+        if (oReq.readyState == XMLHttpRequest.DONE) {
+            var txt = oReq.responseText;
+            console.log(txt);
+            var original = jQuery('#main_txt').val();
+            var new_txt = txt + original;
+            jQuery('#main_txt').val(new_txt);
+        }
+    }
 }
 
 //the following code is attributed to Chris Wilson
@@ -161,7 +172,7 @@ function updateAnalysers(time) {
     }
     
     rafID = window.requestAnimationFrame( updateAnalysers );
-    
+
 }
 
 function toggleMono() {

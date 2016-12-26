@@ -124,7 +124,7 @@ function cancelAnalyserUpdates() {
 }
 
 function updateAnalysers(time) {
-    /*
+    
     if (!analyserContext) {
         var canvas = document.getElementById("analyser");
         canvasWidth = canvas.width;
@@ -161,7 +161,7 @@ function updateAnalysers(time) {
     }
     
     rafID = window.requestAnimationFrame( updateAnalysers );
-    */
+    
 }
 
 function toggleMono() {

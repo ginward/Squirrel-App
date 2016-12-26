@@ -7,6 +7,7 @@ initAudio();
 jQuery( document ).ready(function() {
     jQuery(".hint").hide();
     jQuery(".ball_container").hide(); 
+    jQuery("#save").hide();
 });
 
 function uploadBlob(blob){
@@ -17,6 +18,7 @@ function uploadBlob(blob){
             base64data=base64data.substr(base64data.indexOf(',')+1)
             request(base64data);                
         }
+    doneEncoding(blob);
 }
 
 function request(base64data){
@@ -77,19 +79,19 @@ var recIndex = 0;
 */
 
 function saveAudio() {
-    audioRecorder.exportWAV( doneEncoding );
+    //audioRecorder.exportWAV( doneEncoding );
     // could get mono instead by saying
     // audioRecorder.exportMonoWAV( doneEncoding );
 }
 
 function gotBuffers( buffers ) {
-    var canvas = document.getElementById( "wavedisplay" );
+    //var canvas = document.getElementById( "wavedisplay" );
 
-    drawBuffer( canvas.width, canvas.height, canvas.getContext('2d'), buffers[0] );
+    //drawBuffer( canvas.width, canvas.height, canvas.getContext('2d'), buffers[0] );
 
     // the ONLY time gotBuffers is called is right after a new recording is completed - 
     // so here's where we should set up the download.
-    audioRecorder.exportWAV( doneEncoding );
+    //audioRecorder.exportWAV( doneEncoding );
 }
 
 function doneEncoding( blob ) {
@@ -102,17 +104,24 @@ function toggleRecording( e ) {
         // stop recording
         audioRecorder.stop();
         e.classList.remove("recording");
-        //audioRecorder.getBuffers( gotBuffers );
+        //upload the audio to server
         audioRecorder.exportMonoWAV( uploadBlob );
+        //download the audio
+        //audioRecorder.getBuffers( gotBuffers );
+        //audioRecorder.exportWAV( doneEncoding );
         e.innerHTML = "Voice to Text";
-        jQuery(".hint").show();
-        jQuery(".ball_container").show();
+        jQuery(".hint").hide();
+        jQuery(".ball_container").hide();
+        jQuery("#save").show();
     } else {
         // start recording
         if (!audioRecorder)
             return;
         e.classList.add("recording");
         e.innerHTML = "STOP";
+        jQuery(".hint").show();
+        jQuery(".ball_container").show();
+        jQuery("#save").hide();
         audioRecorder.clear();
         audioRecorder.record();
     }
@@ -211,12 +220,15 @@ function gotStream(stream) {
 }
 
 function initAudio() {
-        if (!navigator.getUserMedia)
-            navigator.getUserMedia = navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
-        if (!navigator.cancelAnimationFrame)
-            navigator.cancelAnimationFrame = navigator.webkitCancelAnimationFrame || navigator.mozCancelAnimationFrame;
-        if (!navigator.requestAnimationFrame)
-            navigator.requestAnimationFrame = navigator.webkitRequestAnimationFrame || navigator.mozRequestAnimationFrame;
+    if (!navigator.getUserMedia)
+        navigator.getUserMedia = navigator.getUserMedia ||
+                                 navigator.webkitGetUserMedia ||
+                                 navigator.mozGetUserMedia ||
+                                 navigator.msGetUserMedia;
+    if (!navigator.cancelAnimationFrame)
+        navigator.cancelAnimationFrame = navigator.webkitCancelAnimationFrame || navigator.mozCancelAnimationFrame;
+    if (!navigator.requestAnimationFrame)
+        navigator.requestAnimationFrame = navigator.webkitRequestAnimationFrame || navigator.mozRequestAnimationFrame;
 
     navigator.getUserMedia(
         {
@@ -230,7 +242,15 @@ function initAudio() {
                 "optional": []
             },
         }, gotStream, function(e) {
-            alert('Error getting audio');
-            console.log(e);
+            alert('Please use Chrome or Firefox Browser. Safari and WeChat browser are currently no supported.');
+            alert(printObject(e));
         });
+}
+
+function printObject(o) {
+  var out = '';
+  for (var p in o) {
+    out += p + ': ' + o[p] + '\n';
+  }
+  alert(out);
 }

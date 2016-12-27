@@ -3,9 +3,11 @@ var express = require('express');
 var app = express();
 var https = require('https');
 var http = require('http');
-var privateKey  = fs.readFileSync('/etc/letsencrypt/live/www.duedue.xyz/privkey.pem', 'utf8');
-var certificate = fs.readFileSync('/etc/letsencrypt/live/www.duedue.xyz/cert.pem', 'utf8');
-var credentials = {key: privateKey, cert: certificate};
+var credentials = {
+     key: fs.readFileSync('/etc/letsencrypt/live/www.duedue.xyz/privkey.pem'),
+     cert: fs.readFileSync('/etc/letsencrypt/live/www.duedue.xyz/fullchain.pem'),
+     ca: fs.readFileSync('/etc/letsencrypt/live/www.duedue.xyz/chain.pem')
+};
 var path = require('path');
 app.all('*', ensureSecure); // at top of routing calls
 app.use(express.static(path.join(__dirname, 'public')));

@@ -112,8 +112,7 @@ function toggleRecording( e ) {
         //audioRecorder.getBuffers( gotBuffers );
         //audioRecorder.exportWAV( doneEncoding );
         e.innerHTML = "Voice to Text";
-        jQuery(".hint").hide();
-        jQuery(".ball_container").hide();
+        jQuery(".hint").html("Processing... (Longer Recording results in Longer Wait time)");
         jQuery("#save").show();
     } else {
         // start recording
@@ -121,6 +120,7 @@ function toggleRecording( e ) {
             return;
         e.classList.add("recording");
         e.innerHTML = "STOP";
+        jQuery(".hint").html("Recording... Click Stop to Transcribe");
         jQuery(".hint").show();
         jQuery(".ball_container").show();
         jQuery("#save").hide();

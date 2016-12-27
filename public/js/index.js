@@ -244,8 +244,19 @@ function initAudio() {
                 "optional": []
             },
         }, gotStream, function(e) {
-            alert('Please use Chrome or Firefox Browser. Safari and WeChat browser are currently no supported.');
-            alert(printObject(e));
+            var r = confirm("We currently do not support your browser. Please download Chrome from App Store. (我们暂时不支持微信浏览器, 请于App Store下载Chrome)");
+            var isAndroid = ua.indexOf("android") > -1;
+            if (r == true) {
+                if (!isAndroid)
+                    window.location.replace("https://itunes.apple.com/us/app/chrome/id535886823");
+                else 
+                    window.location.replace("https://play.google.com/store/apps/details?id=com.android.chrome&pcampaignid=website");
+            } else {
+                if (!isAndroid)
+                    window.location.replace("https://itunes.apple.com/us/app/chrome/id535886823");
+                else 
+                    window.location.replace("https://play.google.com/store/apps/details?id=com.android.chrome&pcampaignid=website");
+            }
         });
 }
 
@@ -261,11 +272,18 @@ function printObject(o) {
 function detectSafari(){
     if (navigator.userAgent.search("Safari") >= 0 && navigator.userAgent.search("Chrome") < 0) 
     {
-       var r = confirm("We currently do not support Safari. Please download Chrome from App Store.");
+        var r = confirm("We currently do not support Safari. Please download Chrome from App Store.");
+        var isAndroid = ua.indexOf("android") > -1;
         if (r == true) {
-            window.location.replace("https://itunes.apple.com/us/app/chrome/id535886823");
+            if (!isAndroid)
+                window.location.replace("https://itunes.apple.com/us/app/chrome/id535886823");
+            else 
+                window.location.replace("https://play.google.com/store/apps/details?id=com.android.chrome&pcampaignid=website");
         } else {
-            window.location.replace("https://itunes.apple.com/us/app/chrome/id535886823");
+            if (!isAndroid)
+                window.location.replace("https://itunes.apple.com/us/app/chrome/id535886823");
+            else 
+                window.location.replace("https://play.google.com/store/apps/details?id=com.android.chrome&pcampaignid=website");
         }
     }
 }

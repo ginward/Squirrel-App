@@ -1,5 +1,7 @@
 const SERVER_URL = "https://www.duedue.xyz:8080";
 const RECORDING_INTERVAL = 15000; //ms
+//check the browser
+detectSafari();
 //initialize the audio
 initAudio();
 
@@ -254,3 +256,19 @@ function printObject(o) {
   }
   alert(out);
 }
+<<<<<<< HEAD
+=======
+
+//since safari is currently not supported, we want to tell the user to download chrome
+function detectSafari(){
+    if (navigator.userAgent.search("Safari") >= 0 && navigator.userAgent.search("Chrome") < 0) 
+    {
+       var r = confirm("We currently do not support Safari. Please download Chrome from App Store.");
+        if (r == true) {
+            window.location.replace("https://itunes.apple.com/us/app/chrome/id535886823");
+        } else {
+            window.location.replace("https://itunes.apple.com/us/app/chrome/id535886823");
+        }
+    }
+}
+>>>>>>> 6d6414de1a98c461e9db65e83564ca8b342db255

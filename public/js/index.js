@@ -256,8 +256,6 @@ function printObject(o) {
   }
   alert(out);
 }
-<<<<<<< HEAD
-=======
 
 //since safari is currently not supported, we want to tell the user to download chrome
 function detectSafari(){
@@ -271,4 +269,4 @@ function detectSafari(){
         }
     }
 }
->>>>>>> 6d6414de1a98c461e9db65e83564ca8b342db255
+

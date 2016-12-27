@@ -245,6 +245,7 @@ function initAudio() {
             },
         }, gotStream, function(e) {
             var r = confirm("We currently do not support your browser. Please download Chrome from App Store. (我们暂时不支持微信浏览器, 请于App Store下载Chrome)");
+            var ua = navigator.userAgent.toLowerCase();
             var isAndroid = ua.indexOf("android") > -1;
             if (r == true) {
                 if (!isAndroid)
@@ -273,6 +274,7 @@ function detectSafari(){
     if (navigator.userAgent.search("Safari") >= 0 && navigator.userAgent.search("Chrome") < 0) 
     {
         var r = confirm("We currently do not support Safari. Please download Chrome from App Store.");
+        var ua = navigator.userAgent.toLowerCase();
         var isAndroid = ua.indexOf("android") > -1;
         if (r == true) {
             if (!isAndroid)

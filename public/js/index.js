@@ -38,7 +38,7 @@ function request(base64data){
             var txt = oReq.responseText;
             console.log(txt);
             var original = jQuery('#main_txt').val();
-            var new_txt = txt + original;
+            var new_txt = original + " " + txt;
             jQuery('#main_txt').val(new_txt);
             jQuery(".hint").hide();
             jQuery(".ball_container").hide();
